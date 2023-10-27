@@ -1,0 +1,93 @@
+import csv
+
+def calculate_quality_score(ingredient_list, good_words, bad_words):
+    score = 75 
+    ingredients = ingredient_list.split(',')
+
+    for ingredient in ingredients:
+        ingredient = ingredient.strip().lower()
+        if ingredient in good_words:
+            score += good_words[ingredient]
+        elif ingredient in bad_words:
+            score -= bad_words[ingredient]
+    return score
+
+good_words = {
+    'alpha-hydroxy acids': 5,
+    'glycolic acid': 5,
+    'salicylic acid': 5,
+    'l-ascorbic acid': 5,
+    # Add more good ingredients and their scores
+}
+
+bad_words = {
+    'aluminum': 5,
+    'formaldehyde': 5,
+    'polyethylene glycols': 5,
+    'phthalates': 5,
+    'oxybenzone': 5,
+    'methylparaben': 5,
+    'propylparaben': 5,
+    'butylparaben': 5,
+    'ethylparaben': 5,
+    'triethanolamine': 5,
+    'monoethanolamine': 5,
+    'diethanolamine': 5
+    # Add more bad ingredients and their scores
+}
+
+input_file = 'D:\RANMON SIT ON DESKBOp\ISTE470\Project\cosmetics.csv'
+output_arff_file = 'D:\RANMON SIT ON DESKBOp\ISTE470\Project\scores.arff'
+
+# Define the class attribute values
+class_values = ['Moisturizer', '"Eye cream"', '"Sun protect"']
+columns_to_include = [3, 4, 5, 6, 7, 8, 9, 10]  # Specify the columns you want to include
+
+with open(input_file, mode='r') as csv_file:
+    reader = csv.reader(csv_file)
+    labels = next(reader)
+
+# Remove the ingredient column label and replace it with 'quality'
+labels[5] = 'Ingredient_score'
+
+# Filter labels based on columns_to_include
+filtered_labels = [labels[i] for i in columns_to_include]
+
+with open(output_arff_file, mode='w', newline='') as arff_file:
+    arff_file.write("@relation ingredient_quality\n\n")
+    
+    arff_file.write("@attribute class { " + ", ".join(class_values) + " }\n")
+    
+    # Write attribute definitions based on the filtered labels
+    for label in filtered_labels:
+        if label != 'class':
+            attribute_definition = f"@attribute {label} numeric\n"
+            arff_file.write(attribute_definition)
+
+    arff_file.write("@data\n")
+
+    with open(input_file, mode='r') as csv_file:
+        reader = csv.reader(csv_file)
+        next(reader)  # Skip the first row with labels
+        
+        for row_number, row in enumerate(reader, start=2):
+            # Read data from the specified columns
+            columns_data = [row[i] for i in columns_to_include]
+            
+            # Read data from the 6th column (index 5) as the ingredient list
+            ingredient_list = row[5]
+            
+            # Calculate the quality score
+            score = calculate_quality_score(ingredient_list, good_words, bad_words)
+            
+            # Replace the ingredient score in the data
+            columns_data[columns_to_include.index(5)] = str(score)
+            
+            # Get the class value from the first column
+            class_value = row[0]
+            
+            # Write the data to the ARFF file
+            arff_file.write(f"'{class_value}'," + ','.join(columns_data) + "\n")
+            
+            # Print the score and row number to the console
+            print(f"Row {row_number}: Score = {score}")
