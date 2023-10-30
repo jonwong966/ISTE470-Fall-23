@@ -17,6 +17,14 @@ good_words = {
     'glycolic acid': 5,
     'salicylic acid': 5,
     'l-ascorbic acid': 5,
+    'glycerin': 5,
+    'citric acid': 3,
+    'water': 5,
+    'tocopherol': 3,
+    'tocoperyl acetate': 3,
+    'myristryl alcohol': 3,
+    'polysorbate-60': 3,
+    'urea': 3,
     # Add more good ingredients and their scores
 }
 
@@ -32,28 +40,40 @@ bad_words = {
     'ethylparaben': 5,
     'triethanolamine': 5,
     'monoethanolamine': 5,
-    'diethanolamine': 5
-    # Add more bad ingredients and their scores
+    'diethanolamine': 5,
+    'jasmine': 3,
+    'dimethicone': 5,
+    'phenoxuethenol': 5,
+    'talc': 5,
+    'liliac': 3,
+    'sodium hydroxide': 5,
+    'geraniol': 3,
+    'chlorphenesin': 5,
+    'pretinyl palmiate': 5,
+    'titanium dioxide': 3,
+    'zinc oxide' : 5,
+  # Add more bad ingredients and their scores
 }
 
 input_file = 'D:\RANMON SIT ON DESKBOp\ISTE470\Project\cosmetics.csv'
 output_arff_file = 'D:\RANMON SIT ON DESKBOp\ISTE470\Project\scores.arff'
 
 # Define the class attribute values
-class_values = ['Moisturizer', '"Eye cream"', '"Sun protect"']
-columns_to_include = [3, 4, 5, 6, 7, 8, 9, 10]  # Specify the columns you want to include
+class_values = ["'Moisturizer'", "'Eye cream'", "'Sun protect'"]
 
+# Read the first line of the CSV file to get column labels
 with open(input_file, mode='r') as csv_file:
     reader = csv.reader(csv_file)
     labels = next(reader)
 
 # Remove the ingredient column label and replace it with 'quality'
-labels[5] = 'Ingredient_score'
+labels[5] = 'quality'
 
 # Filter labels based on columns_to_include
+columns_to_include = [3, 4, 5, 6, 7, 8, 9, 10]  # Specify the columns you want to include
 filtered_labels = [labels[i] for i in columns_to_include]
 
-with open(output_arff_file, mode='w', newline='') as arff_file:
+with open(output_arff_file, mode='w', newline='', encoding='utf-8') as arff_file:
     arff_file.write("@relation ingredient_quality\n\n")
     
     arff_file.write("@attribute class { " + ", ".join(class_values) + " }\n")
@@ -66,7 +86,7 @@ with open(output_arff_file, mode='w', newline='') as arff_file:
 
     arff_file.write("@data\n")
 
-    with open(input_file, mode='r') as csv_file:
+    with open(input_file, mode='r', encoding='utf-8') as csv_file:
         reader = csv.reader(csv_file)
         next(reader)  # Skip the first row with labels
         
@@ -77,11 +97,18 @@ with open(output_arff_file, mode='w', newline='') as arff_file:
             # Read data from the 6th column (index 5) as the ingredient list
             ingredient_list = row[5]
             
-            # Calculate the quality score
-            score = calculate_quality_score(ingredient_list, good_words, bad_words)
-            
-            # Replace the ingredient score in the data
-            columns_data[columns_to_include.index(5)] = str(score)
+            # Check if the ingredient list is empty or contains only whitespace characters
+            if ',' not in ingredient_list:
+                # Replace with Weka missing value symbol "?"
+                ingredient_list = "?"
+                columns_data[columns_to_include.index(5)] = "?"
+                print(f"Row {row_number}: Score = ?")
+            else:
+                # Calculate the quality score
+                score = calculate_quality_score(ingredient_list, good_words, bad_words)
+                # Replace the ingredient score in the data
+                columns_data[columns_to_include.index(5)] = str(score)
+                print(f"Row {row_number}: Score = {score}")
             
             # Get the class value from the first column
             class_value = row[0]
@@ -90,4 +117,4 @@ with open(output_arff_file, mode='w', newline='') as arff_file:
             arff_file.write(f"'{class_value}'," + ','.join(columns_data) + "\n")
             
             # Print the score and row number to the console
-            print(f"Row {row_number}: Score = {score}")
+            
